@@ -15,6 +15,9 @@ def forward_substitution(L, b):
     n = len(b)
     c = np.zeros_like(b, dtype=np.float64)
     for i in range(n):
+        if np.isclose(L[i, i], 0):
+            raise ValueError(f"Zero or near-zero diagonal element encountered at "
+                             f"index {i} during forward substitution.")
         sum_L_c = sum(L[i, k] * c[k] for k in range(i))
         c[i] = (b[i] - sum_L_c) / L[i, i]
     return c
@@ -34,9 +37,13 @@ def backward_substitution(U, c):
     n = len(c)
     x = np.zeros_like(c, dtype=np.float64)
     for i in range(n-1, -1, -1):
+        if np.isclose(U[i, i], 0):
+            raise ValueError(f"Zero or near-zero diagonal element encountered at "
+                             f"index {i} during backward substitution.")
         sum_U_x = sum(U[i, k] * x[k] for k in range(i+1, n))
         x[i] = (c[i] - sum_U_x) / U[i, i]
     return x
+
 
 # LU Decomposition function
 def lu_decomposition(A):
