@@ -3,7 +3,7 @@ from Procedures.LU_functions import (
     forward_substitution, backward_substitution)
 
 
-def ldl_decomposition(A, tol=1e-14):
+def ldl_decomposition(A, tol=1e-14, verbose=False):
     """
     Perform the LDL decomposition of a symmetric matrix A, with an optional
     check for whether pivoting is necessary.
@@ -30,7 +30,8 @@ def ldl_decomposition(A, tol=1e-14):
     # Eigenvalue check for positive definiteness
     eigenvalues = np.linalg.eigvalsh(A)
     if np.any(eigenvalues <= 0):
-        print("Matrix is not positive definite. Pivoting will be applied.")
+        if verbose:
+            print("Matrix is not positive definite. Pivoting will be applied.")
         return ldl_decomposition_pivoted(A, tol)
 
     n = A.shape[0]  # Number of rows/columns
