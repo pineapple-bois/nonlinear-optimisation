@@ -1,6 +1,7 @@
 import numpy as np
 import sympy as sp
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def plot_contour(f_func, f_symbolic, x_range, y_range,
@@ -113,6 +114,63 @@ def plot_clamped_contour(f_func, f_symbolic, x_range, y_range,
     plt.xlabel('x', fontsize=12)
     plt.ylabel('y', fontsize=12)
     plt.title(f'Contour Plot with Clamped Values\n$f(x, y) = {sp.latex(f_symbolic)}$', fontsize=14)
+
+    # Show the plot
+    plt.show()
+
+
+def plot_surface(f_func, f, x_range, y_range, elev=30, azim=-60):
+    """
+    Generate a 3D surface plot for a given function f(x, y).
+
+    Parameters:
+    ----------
+    f_func : function
+        Lambdified function to evaluate f(x, y) on the grid.
+    f : sympy.Expr
+        Original symbolic expression for displaying in the title.
+    x_range : tuple
+        Range for x-axis as (min, max).
+    y_range : tuple
+        Range for y-axis as (min, max).
+    elev : int, optional
+        Elevation angle for the plot's view (default is 30 degrees).
+    azim : int, optional
+        Azimuthal angle for the plot's view (default is -60 degrees).
+
+    Returns:
+    -------
+    None
+    """
+    # Generate a dense meshgrid for the plot
+    x = np.linspace(*x_range, 100)
+    y = np.linspace(*y_range, 100)
+    X, Y = np.meshgrid(x, y)
+
+    # Evaluate f on the grid
+    Z = f_func(X, Y)
+
+    # Create the 3D surface plot
+    fig = plt.figure(figsize=(12, 10))
+    axes = fig.add_subplot(projection='3d')
+
+    # Plot the surface
+    surf = axes.plot_surface(X, Y, Z, cmap='jet', edgecolor='none', alpha=0.9)
+
+    # Add a colour bar for reference
+    fig.colorbar(surf, ax=axes, shrink=0.5, aspect=10, label='Function Value')
+
+    # Set the viewing direction
+    axes.view_init(elev=elev, azim=azim)
+
+    # Add axis labels and title
+    axes.set_xlabel('x')
+    axes.set_ylabel('y')
+    axes.set_zlabel('f(x, y)')
+    axes.set_title(f'3D Surface Plot\n$f(x, y) = {{{sp.latex(f)}}}$', fontsize=14)
+
+    # Add grid lines for clarity
+    axes.grid(True)
 
     # Show the plot
     plt.show()
