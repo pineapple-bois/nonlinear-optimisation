@@ -6,7 +6,7 @@ Python implementation of a **trust-region–style** Levenberg–Marquardt algori
 **Levenberg–Marquardt (LM)** is a blend of **Newton’s method** and **gradient descent**, originally popular in non-linear least squares contexts. In classical LM, we solve
 
 $$
-(\mathbf{H} + \lambda \mathbf{I}) \, \mathbf{d} = -\nabla f,
+(\mathbf{H} + \lambda \mathbf{I}) \, \mathbf{d} = -\nabla f
 $$
 
 where $\mathbf{H}$ is the Hessian and $\lambda$ is a *damping* parameter. By adjusting $\lambda$, we move between small “gradient descent–like” steps when the function is difficult (large $\lambda$) and near-Newton steps when we’re close to the solution (small $\lambda$).
@@ -185,19 +185,19 @@ $$
 1. **Symbolic Derivatives**  
    - We optionally use [SymPy](https://www.sympy.org/) to auto-generate the gradient $\nabla f(\mathbf{x})$ and Hessian $\mathbf{H}(\mathbf{x})$.  
 
-2. **$\mathbf{LDL}^T$ Decomposition**  
-   - We factor $\mathbf{H}_{\text{aug}} = \mathbf{H} + a \mathbf{I}$ via an [LDLᵀ decomposition](../Procedures/ldl_decomposition.py), ensuring numerical stability if $\mathbf{H}_{\text{aug}}$ is positive definite.
+2. **LDLᵀ Decomposition**  
+   - We factor $\mathbf{H}_{\text{aug}} = \mathbf{H} + a\mathbf{I}$ via an [LDLᵀ decomposition](../Procedures/ldl_decomposition.py), ensuring numerical stability if $\mathbf{H}_{\text{aug}}$ is positive definite.
 
 3. **Backtracking Line Search**  
    - Implements **Armijo** sufficient-decrease condition:
-     $$
-     f(\mathbf{x} + \alpha\mathbf{d}) \le f(\mathbf{x}) + c\alpha \nabla f(\mathbf{x})^T \mathbf{d}
-     $$
+$$
+f(\mathbf{x} + \alpha\mathbf{d}) \le f(\mathbf{x}) + c\alpha \nabla f(\mathbf{x})^T \mathbf{d}
+$$
    - If no $\alpha$ satisfies this within a few attempts, the step is “rejected” and damping $\lambda$ is increased.
 
 4. **Adaptive Damping**  
    - After a successful step, we typically do $\lambda \leftarrow 0.8\lambda$ 
-   - If no improvement occurs, $ \lambda $ is **doubled** and we re-factor $\mathbf{H} + \lambda \mathbf{I}$.
+   - If no improvement occurs, $\lambda$ is **doubled** and we re-factor $\mathbf{H} + \lambda \mathbf{I}$.
 
 5. **Convergence Checks**  
    - Stop if the gradient norm $\|\nabla f(\mathbf{x})\|$ is small enough, the step size $\|\mathbf{d}\|$ is small enough, or the function value changes below a tolerance.
@@ -214,15 +214,15 @@ $$
 
 2. **Iteration** for $k$ in $1,2,\dots$ up to `maxiter`:
    1. Evaluate $\nabla f(\mathbf{x}_k)$ and $\mathbf{H}(\mathbf{x}_k)$.  
-   2. Form 
-$$
-\mathbf{H}_{\text{aug}} = \mathbf{H}(\mathbf{x}_k) + \lambda \|\mathbf{H}(\mathbf{x}_k)\|_\infty \mathbf{I}
-$$
+   2. Form
+   
+   $$\mathbf{H}_{\text{aug}} = \mathbf{H}(\mathbf{x}_k) + \lambda \|\mathbf{H}(\mathbf{x}_k)\|_\infty \mathbf{I}$$
+
    3. Factor $\mathbf{H}_{\text{aug}}$ (via $\mathbf{LDL}^T$).  
-   4. Solve 
-$$
-\mathbf{H}_{\text{aug}}\mathbf{d} = -\nabla f(\mathbf{x}_k).
-$$
+   4. Solve
+   
+   $$\mathbf{H}_{\text{aug}}\mathbf{d} = -\nabla f(\mathbf{x}_k).$$
+
    5. **Backtracking search**: Find $\alpha \le 1$ s.t. Armijo holds.  
    6. If no such $\alpha$ is found, **increase** $\lambda$ and retry from step 2.  
    7. Otherwise, compute $f(\mathbf{x}_k + \alpha\,\mathbf{d})$. If it’s an improvement:
@@ -320,9 +320,8 @@ $$
 
 3. **Augmented Hessian for Non-Positive $\mathbf{D}$**  
    - When any diagonal element of $\mathbf{D}$ is $\le 0$, we add 
-$$
-a = 1.1 \,\|\mathbf{H}\|_\infty
-$$ 
+   
+   $$a = 1.1 \,\|\mathbf{H}\|_\infty$$ 
    
    to $\mathbf{H}$ and refactor.
 
@@ -344,15 +343,11 @@ $$
 2. **Iteration** ($k = 0,1,\dots$):
    1. Compute $\nabla f(\mathbf{x}_k)$, $\mathbf{H}(\mathbf{x}_k)$.  
    2. Factor $\mathbf{H}(\mathbf{x}_k) = \mathbf{L}\,\mathbf{D}\,\mathbf{L}^T$.  
-   3. If $\mathbf{D}$ has non-positive entries, set 
-   $$
-   \mathbf{H} \leftarrow \mathbf{H} + a\,\mathbf{I}, \quad a = 1.1\,\|\mathbf{H}\|_\infty,
-   $$
+   3. If $\mathbf{D}$ has non-positive entries, set
+   $$\mathbf{H} \leftarrow \mathbf{H} + a\,\mathbf{I}, \quad a = 1.1\,\|\mathbf{H}\|_\infty$$
    then refactor.  
    4. Solve  
-   $$
-   \mathbf{H}(\mathbf{x}_k)\,\mathbf{d} = -\,\nabla f(\mathbf{x}_k).
-   $$
+   $$\mathbf{H}(\mathbf{x}_k)\,\mathbf{d} = -\,\nabla f(\mathbf{x}_k)$$
    5. Update $\mathbf{x}_{k+1} = \mathbf{x}_k + \mathbf{d}$.  
    6. Check if $\|\nabla f(\mathbf{x}_{k+1})\| \lt \eta$ etc.  
    7. If converged, stop; else continue.
