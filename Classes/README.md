@@ -216,15 +216,9 @@ $$f(\mathbf{x} + \alpha\mathbf{d}) \le f(\mathbf{x}) + c\alpha \nabla f(\mathbf{
 
 2. **Iteration** for $k$ in $1,2,\dots$ up to `maxiter`:
    1. Evaluate $\nabla f(\mathbf{x}_k)$ and $\mathbf{H}(\mathbf{x}_k)$.  
-   2. Form 
-
-   $$\mathbf{H}_{\text{aug}} = \mathbf{H}(\mathbf{x}_k) + \lambda \|\mathbf{H}(\mathbf{x}_k)\|_\infty \mathbf{I}$$
-
-   3. Factor $\mathbf{H}_{\text{aug}}$ (via $\mathbf{LDL}^T$).  
-   4. Solve
-   
-   $$\mathbf{H}_{\text{aug}}\mathbf{d} = -\nabla f(\mathbf{x}_k)$$
-
+   2. Form $\mathbf{H}_{\text{aug}} = \mathbf{H}(\mathbf{x}_k) + \lambda \|\mathbf{H}(\mathbf{x}_k)\|_\infty \mathbf{I}$
+   3. Factor $\mathbf{H}_{\text{aug}}$ (via $\mathbf{LDL}^T$) 
+   4. Solve $\mathbf{H}_{\text{aug}}\mathbf{d} = -\nabla f(\mathbf{x}_k)$
    5. **Backtracking search**: Find $\alpha \le 1$ s.t. Armijo holds.  
    6. If no such $\alpha$ is found, **increase** $\lambda$ and retry from step 2.  
    7. Otherwise, compute $f(\mathbf{x}_k + \alpha\,\mathbf{d})$. If it’s an improvement:
