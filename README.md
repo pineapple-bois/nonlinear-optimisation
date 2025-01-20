@@ -1,10 +1,112 @@
 # Nonlinear Optimisation - Finding local minimisers
 
+## Newton-Raphson (NR) and Levenberg-Marquardt (LM) Implementations
+
+Both NR and LM methods rely on a custom $\mathbf{LDL}^T$ decomposition designed to:
+- Match the efficiency of [`scipy.linalg.ldl`](https://docs.scipy.org/doc/scipy-1.15.0/reference/generated/scipy.linalg.ldl.html) while applying partial pivoting only when necessary.
+- Solve triangular systems using forward and backward substitution.
+
+### Key Features of $\mathbf{LDL}^T$ Implementation:
+- **Partial Pivoting**: Applied conditionally to ensure numerical stability for small or negative pivots.
+- **Symmetry Preservation**: Maintains matrix symmetry during decomposition.
+- **Learning-Oriented**: Built to explore the fundamentals of numerical linear algebra.
+
+This $\mathbf{LDL}^T$ decomposition underpins the optimisation methods, ensuring stable and efficient solutions to the linear systems in each iteration.
+
 ----
 
-## [Benchmarking Against Challenging Functions](BenchmarkingOne.ipynb)
+## [Levenberg-Marquardt (LM) Solver](Classes/LevenbergMarquardtTrustRegion.py)
 
-The objective of this project is to test custom implementations of the Levenberg–Marquardt, and Newton-Raphson methods against [`scipy.optimize.minimize method='BFGS'`](https://docs.scipy.org/doc/scipy-1.15.0/reference/optimize.minimize-bfgs.html) and test performance on a few 'challenging functions' including;
+The custom Levenberg-Marquardt implementation adopts a **trust-region approach**, blending the steepest descent and Newton directions by augmenting the Hessian matrix with a damping parameter $\lambda$. The method dynamically adjusts $\lambda$ based on the actual versus predicted reduction in the objective function.
+
+### Key Features:
+1. **Augmented Hessian**: 
+   - The Hessian is modified as $\mathbf{H}_{\text{aug}} = \mathbf{H} + \lambda \mathbf{I}$ to stabilise the Newton step and control step size.
+   - The damping parameter $\lambda$ is adjusted iteratively to balance between the Gauss-Newton and gradient descent directions.
+
+2. **Trust Region Management**:
+   - $\lambda$ is increased if the step is rejected ($\rho < 0.25$) and decreased if the step performs well ($\rho > 0.75$).
+   - $\rho$: Ratio of actual reduction to predicted reduction.
+
+3. **Efficient Linear Solves**:
+   - Utilises the custom $\mathbf{LDL}^T$ decomposition to solve the linear system $\mathbf{H}_{\text{aug}} \mathbf{d} = -\nabla f$.
+
+4. **Convergence Criteria**:
+   - The solver terminates when:
+     - Gradient norm: $||\nabla f|| < \eta$,
+     - Step size: $||\Delta x|| < \varepsilon$,
+     - Function value change: $|f(x_{k+1}) - f(x_k)| < \delta$.
+
+5. **Symbolic Derivatives**:
+   - Symbolic gradient and Hessian calculations (via SymPy) ensure precision for small-scale problems.
+
+### Algorithm Outline:
+1. Initialise $\lambda$ and evaluate the gradient ($\nabla f$) and Hessian ($\mathbf{H}$).
+2. Augment the Hessian ($\mathbf{H}_{\text{aug}}$) and solve for the step $d$ using $\mathbf{LDL}^T$.
+3. Compute the actual and predicted reductions, update $\lambda$, and decide to accept or reject the step.
+4. Repeat until convergence or the maximum number of iterations is reached.
+
+### Advantages:
+- Robust for poorly conditioned problems due to adaptive damping.
+- Handles flat regions effectively, avoiding divergence.
+- Tracks intermediate results for analysis, including $\lambda$, $\nabla f$, and $f(x)$.
+
+----
+
+## [Newton-Raphson (NR) Solver](Classes/NewtonRaphson.py)
+
+The custom Newton-Raphson implementation leverages the full second-order information of the objective function by directly solving the system of equations formed by the gradient and Hessian. It employs $\mathbf{LDL}^T$ decomposition to ensure numerical stability and efficiency.
+
+### Key Features:
+1. **Second-Order Optimisation**:
+   - Solves the Newton system $\mathbf{H} \mathbf{d} = -\nabla f$, where $\mathbf{H}$ is the Hessian and $\mathbf{d}$ is the search direction.
+
+2. **Stability with $\mathbf{LDL}^T$ Decomposition**:
+   - Utilises a custom $\mathbf{LDL}^T$ decomposition with conditional pivoting to handle poorly conditioned Hessians.
+   - If $\mathbf{H}$ is not positive definite, the Hessian is augmented as $\mathbf{H} + a\mathbf{I}$, where $a$ is proportional to the largest entry of $\mathbf{H}$.
+
+3. **Convergence Criteria**:
+   - Terminates when:
+     - Gradient norm: $||\nabla f|| < \eta$,
+     - Step size: $||\Delta \mathbf{x}|| < \epsilon$,
+     - Function value change: $|f(\mathbf{x}_{k+1}) - f(\mathbf{x}_k)| < \delta$.
+
+4. **Symbolic Derivatives**:
+   - Computes gradients and Hessians symbolically (via SymPy) to minimise numerical errors in small-scale problems.
+
+### Algorithm Outline:
+1. Evaluate the gradient ($\nabla f$) and Hessian ($\mathbf{H}$) at the current iterate.
+2. Decompose $\mathbf{H}$ using $\mathbf{LDL}^T$.
+   - If the Hessian is not positive definite, modify it with $\mathbf{H} + a\mathbf{I}$ and repeat decomposition.
+3. Solve for the search direction $\mathbf{d}$ using $\mathbf{LDL}^T$.
+4. Update the current point $\mathbf{x}$ and evaluate the new function value $f(\mathbf{x})$.
+5. Check for convergence or continue iterating up to the maximum allowed iterations.
+
+### Advantages:
+- Highly efficient when $\mathbf{H}$ is well-conditioned and the initial guess is close to the solution.
+- Exploits second-order information to achieve rapid convergence in well-behaved regions.
+
+### Limitations:
+- Sensitive to the quality of the initial guess and the conditioning of $\mathbf{H}$.
+- Diverges if starting far from the solution or in the presence of saddle points.
+
+This implementation prioritises numerical stability and precision while retaining the efficiency of second-order optimisation techniques.
+
+----
+
+## Notebook: [Testing with Challenging Functions](BenchmarkingOne.ipynb)
+
+The objective of this project is to test the custom implementations of the LM, and NR methods against [`scipy.optimize.minimize method='BFGS'`](https://docs.scipy.org/doc/scipy-1.15.0/reference/optimize.minimize-bfgs.html) by testing performance on a few "challenging functions".
+
+**Benchmarking Plan**
+
+1. Examine contour plot to find a potential $\mathbf{x}_0$
+2.  Make an suitable initial guess (by inspection)
+3. Use NR, LM, and BFGS methods to test convergence and robustness.
+4. Compare:
+    - Number of iterations.
+    - Accuracy of the minimiser.
+    - Stability (e.g., did the method fail?).
 
 ## 1. Himmelbrau's Function
 
