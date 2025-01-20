@@ -186,7 +186,9 @@ $$
    - We optionally use [SymPy](https://www.sympy.org/) to auto-generate the gradient $\nabla f(\mathbf{x})$ and Hessian $\mathbf{H}(\mathbf{x})$.  
 
 2. **LDLᵀ Decomposition**  
-   - We factor $\mathbf{H}_{\text{aug}} = \mathbf{H} + a\mathbf{I}$ via an [LDLᵀ decomposition](../Procedures/ldl_decomposition.py), ensuring numerical stability if $\mathbf{H}_{\text{aug}}$ is positive definite.
+   - We factor 
+$$\mathbf{H}_{\text{aug}} = \mathbf{H} + a\mathbf{I}$$ 
+   - via an [LDLᵀ decomposition](../Procedures/ldl_decomposition.py), ensuring numerical stability if $\mathbf{H}_{\text{aug}}$ is positive definite.
 
 3. **Backtracking Line Search**  
    - Implements **Armijo** sufficient-decrease condition:
