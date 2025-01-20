@@ -13,7 +13,7 @@ f(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2
 $$
 
 <div style="display: flex; justify-content: space-around;">
-    <img src="FunctionImages/Surfaces/himmelbraus.png" alt="surface" width="50%">
+    <img src="FunctionImages/Surfaces/Himmelbrau.png" alt="surface" width="50%">
     <img src="FunctionImages/Contours/Himmelbrau.png" alt="contour" width="50%">
 </div>
 
@@ -94,7 +94,7 @@ f(x, y) = \sin(x + y) + (x - y)^2 - 1.5x + 2.5y + 1
 $$
 
 <div style="display: flex; justify-content: space-around;">
-    <img src="FunctionImages/Surfaces/McCormicks.png" alt="surface" width="50%">
+    <img src="FunctionImages/Surfaces/McCormick.png" alt="surface" width="50%">
     <img src="FunctionImages/Contours/McCormick.png" alt="contour" width="50%">
 </div>
 
@@ -146,7 +146,7 @@ f(x, y) = \left(\frac{3}{2} - x + xy\right)^2 + \left(\frac{9}{4} - x + xy^2\rig
 $$
 
 <div style="display: flex; justify-content: space-around;">
-    <img src="FunctionImages/Surfaces/Beales2.png" alt="surface" width="50%">
+    <img src="FunctionImages/Surfaces/Beales.png" alt="surface" width="50%">
     <img src="FunctionImages/Contours/Beales.png" alt="contour" width="50%">
 </div>
 
@@ -198,7 +198,7 @@ for an $n$ dimensional domain.
 We set $n=2$
 
 <div style="display: flex; justify-content: space-around;">
-    <img src="FunctionImages/Surfaces/Rastringin.png" alt="surface" width="50%">
+    <img src="FunctionImages/Surfaces/Rastrigin.png" alt="surface" width="50%">
     <img src="FunctionImages/Contours/Rastrigin.png" alt="contour" width="50%">
 </div>
 
