@@ -6,20 +6,22 @@ from Procedures.ldl_decomposition import ldl_decomposition, ldl_solve
 
 
 class LevenbergMarquardtSolver:
-    def __init__(self, f, variables, x0,
+    def __init__(self, f, variables, x0, lamb=1.1,
                  epsilon=0.5e-5, delta=0.5e-5, eta=0.5e-5,
-                 maxiter=100, use_symbolic=True):
+                 maxiter=100, use_symbolic=True, track_history=True):
         """
-        Initialize the Levenberg-Marquardt solver.
+        Initialise the Levenberg-Marquardt solver.
 
         Parameters:
         ----------
         f : sympy.Expr
-            The scalar function to minimize.
+            The scalar function to minimise.
         variables : list of sympy.Symbol
             The variables of the function.
         x0 : array_like
-            Initial guess for the minimizer.
+            Initial guess for the minimiser.
+        lamb: float
+            Damping parameter of augmented Hessian
         epsilon : float, optional
             Tolerance for step size (||x_{k+1} - x_k||).
         delta : float, optional
@@ -28,6 +30,8 @@ class LevenbergMarquardtSolver:
             Tolerance for gradient norm (||∇f(x_k)||).
         maxiter : int, optional
             Maximum number of iterations.
+        track_history : bool, optional
+            Whether to store history of iterations for analysis.
         """
         self.f = f
         self.variables = variables
@@ -37,9 +41,12 @@ class LevenbergMarquardtSolver:
         self.eta = eta
         self.maxiter = maxiter
         self.use_symbolic = use_symbolic
+        self.track_history = track_history
+        self.nfev = 0
         self.gradient = None
         self.hessian = None
         self.history = []  # To store intermediate results
+        self.lamb = lamb
 
         if self.use_symbolic:
             self._compute_symbolic_derivatives()
@@ -57,80 +64,103 @@ class LevenbergMarquardtSolver:
         self.grad_func = [sp.lambdify(self.variables, g, 'numpy') for g in self.gradient]
         self.hessian_func = sp.lambdify(self.variables, self.hessian, 'numpy')
 
-    def line_search(self, f_func, x, s):
-        """
-        Finds the minimum of the function f, starting from x, in the direction s.
-
-        Arguments:
-            f_func - Lambdified function to minimize
-            x      - NumPy array (current position)
-            s      - NumPy array (search direction)
-
-        Returns:
-            Minimiser (NumPy array) and whether the search was successful
-        """
-        def g(t):
-            return f_func(*(x + t * s))  # Unpack x + t * s into f_func
-
-        # Perform the line search
-        result = minimize_scalar(g)
-
-        # Update x using the minimiser t
-        t_min = result.x
-        return x + t_min * s, result.success
+    def _evaluate_function(self, f_func, x):
+        """Evaluate the function and increment the counter."""
+        self.nfev += 1
+        return f_func(*x)
 
     def solve(self, verbose=False):
-        """Run the Levenberg-Marquardt method."""
+        """
+        Run a trust-region-style Levenberg-Marquardt method.
+        We'll adapt lambda up/down based on actual vs. predicted reduction.
+        """
         f_func = sp.lambdify(self.variables, self.f, 'numpy')
-        f_current = f_func(*self.x)
+        f_current = self._evaluate_function(f_func, self.x)
+        # If self.lamb is None or 0, pick some default
+        if not self.lamb:
+            self.lamb = 1.1
 
         for iteration in range(self.maxiter):
-            # Compute gradient and Hessian
+            # 1. Evaluate gradient/Hessian
             grad_eval = np.array([g(*self.x) for g in self.grad_func])
             H_eval = np.array(self.hessian_func(*self.x))
 
-            # Perform LDL decomposition
+            # 2. Attempt to find a positive-definite H_aug
+            for _ in range(5):  # up to 5 tries
+                a = self.lamb * norm(H_eval, np.inf)
+                H_aug = H_eval + a * np.eye(len(self.x))
+                try:
+                    L, D, p = ldl_decomposition(H_aug, verbose=verbose)
+                    # success, break the loop
+                    break
+                except:
+                    # increase lamb, try again
+                    self.lamb *= 2
+            else:
+                # If we never broke out of the loop => fail
+                return self._finalize(iteration, f_current,
+                                      "Indefinite H after repeated shifting")
+
+            # 3. Solve for d using LDL decomposition
             try:
-                L, D, p = ldl_decomposition(H_eval, verbose=verbose)
+                d = ldl_solve(L, D, p, -grad_eval)
             except Exception as e:
-                return self._finalize(iteration, f_current, f"LDL decomposition failed: {e}")
+                return self._finalize(
+                    iteration, f_current,
+                    f"LDL solve failed: {e}"
+                )
 
-            # If not positive definite, update H to be H + a I
-            if np.any(np.diag(D) <= 0):
-                a = 1.1 * norm(H_eval, np.inf)
-                H_eval += a * np.identity(H_eval.shape[0])
-                L, D, p = ldl_decomposition(H_eval)
+            # 4. Predicted reduction:
+            pred_reduction = -grad_eval.dot(d) - 0.5 * d.dot(H_aug.dot(d))
 
-            # Solve H_eval * d = -grad_eval using LDL^T
-            d = ldl_solve(L, D, p, -grad_eval)
+            # 5. Evaluate at x_trial
+            x_trial = self.x + d
+            f_trial = self._evaluate_function(f_func, x_trial)
+            actual_reduction = f_current - f_trial
 
-            # Perform line search in the direction d
-            x_new, success = self.line_search(f_func, self.x, d)
-            if not success:
-                return self._finalize(iteration, f_current, "Line search failed")
-
-            # Evaluate the function at the new point
-            f_new = f_func(*x_new)
-
-            # Store history
-            self.history.append((self.x.copy(), f_current))
+            rho = 0 if (pred_reduction == 0) else actual_reduction / pred_reduction
 
             if verbose:
-                print(f"Iteration {iteration + 1}: x = {x_new}, f(x) = {f_new}")
+                print(f"Iter {iteration}: f={f_current:.5g}, "
+                      f"pred={pred_reduction:.3g}, actual={actual_reduction:.3g}, "
+                      f"rho={rho:.2g}, lambda={self.lamb:.3g}")
 
-            # Check convergence
-            grad_eval_new = np.array([g(*x_new) for g in self.grad_func])
-            if np.linalg.norm(grad_eval_new, 2) < self.eta and \
-                    np.linalg.norm(x_new - self.x, 2) < self.epsilon and \
-                    abs(f_new - f_current) < self.delta:
-                self.x = x_new  # Ensure self.x is updated to the final value
-                return self._finalize(iteration + 1, f_new, "Converged within tolerances")
+            # 6. Accept or reject
+            if rho < 0.25:
+                # reject step, increase lamb
+                self.lamb *= 2
+            else:
+                # accept step
+                self.x = x_trial
+                f_current = f_trial
 
-            # Accept new point
-            self.x = x_new
-            f_current = f_new
+                # update lamb if step is good
+                if rho > 0.75:
+                    self.lamb *= 0.5
 
+                # store history if requested
+                if self.track_history:
+                    self._store_history(f_current, grad_eval, iteration)
+
+                # 7. Check convergence
+                grad_eval_new = np.array([g(*self.x) for g in self.grad_func])
+                if (np.linalg.norm(grad_eval_new, 2) < self.eta
+                        and np.linalg.norm(d, 2) < self.epsilon
+                        and abs(actual_reduction) < self.delta):
+                    return self._finalize(iteration + 1, f_current,
+                                          "Converged within tolerances")
+        # If we exit the for-loop, finalize:
         return self._finalize(self.maxiter, f_current, "Maximum iterations reached")
+
+    def _store_history(self, f_current, grad_eval, iteration):
+        """Store the current state for debugging and analysis."""
+        self.history.append({
+            "iteration": iteration,
+            "x": self.x.copy(),
+            "f": f_current,
+            "grad": grad_eval.copy(),
+            "lambda": self.lamb
+        })
 
     def _finalize(self, iterations, f_min, reason):
         """
@@ -140,20 +170,25 @@ class LevenbergMarquardtSolver:
         -------
         result : dict
             A dictionary containing:
-            - 'x_min': np.ndarray, the estimated minimizer.
-            - 'iterations': int, the number of iterations taken.
+            - 'message': str, a message describing why the method terminated.
             - 'success': bool, whether the method converged successfully.
-            - 'f_min': float, the function value at the final point.
-            - 'reason': str, a message describing why the method terminated.
+            - 'x': np.ndarray, the estimated minimizer.
+            - 'fun': float, the function value at the final point.
+            - 'nit': int, number of iterations taken.
+            - 'nfev': int, number of function evaluations.
+            - 'lambda': float, final value of lambda.
+            - 'history': list, intermediate results for analysis.
         """
         success_reasons = [
             "Converged within tolerances",
         ]
         return {
-            "x_min": self.x,
-            "iterations": iterations,
             "success": reason in success_reasons,
-            "f_min": f_min,
             "reason": reason,
+            "x": self.x,
+            "fun": f_min,
+            "nit": iterations,
+            "nfev": self.nfev,
+            "lambda": self.lamb,
             "history": self.history
         }
