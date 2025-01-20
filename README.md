@@ -103,7 +103,7 @@ $$
    - We use [SymPy](https://www.sympy.org/) to generate lambdified functions for the gradient and Hessian. This makes it easier to ensure correct derivatives.
 
 2. **$\mathbf{LDL}^T$ Decomposition**  
-   - We factor $(\mathbf{H} + a\mathbf{I})$ via an [$\mathbf{LDL}^T$ decomposition]([ldl_decomposition.py](Procedures/ldl_decomposition.py)). 
+   - We factor $(\mathbf{H} + a\mathbf{I})$ via an [LDLᵀ decomposition](Procedures/ldl_decomposition.py). 
    - The shift $a$ ensures the matrix is positive definite if $\lambda$ is chosen sufficiently large.
 
 3. **Adaptive Lambda**  
@@ -200,9 +200,11 @@ print("Number of iterations:", result["nit"])
 
 Python implementation of a **hybrid** Levenberg–Marquardt method that 
 1. forms a damped Newton step using 
+
 $$
 (\mathbf{H} + \lambda \mathbf{I})\, \mathbf{d} = -\nabla f
 $$
+
 2. applies a backtracking line search to refine the step length. This approach helps handle indefiniteness in the Hessian (via damping) while also preventing overly large steps using an **Armijo** condition.
 
 **Levenberg–Marquardt (LM) + Line Search** combines:
@@ -211,20 +213,27 @@ $$
 
 In each iteration:
 
-- We compute the Hessian $ \mathbf{H}(\mathbf{x}) $ and gradient $ \nabla f(\mathbf{x}) $.
+- We compute the Hessian $\mathbf{H}(\mathbf{x})$ and gradient $\nabla f(\mathbf{x})$.
 - Form the “augmented” Hessian 
+
 $$
 \mathbf{H}_{\text{aug}} \;=\; \mathbf{H}(\mathbf{x}) \;+\; a\,\mathbf{I},
 $$
-where $ a = \lambda \,\|\mathbf{H}(\mathbf{x})\|_\infty $.
+
+where $a = \lambda \,\|\mathbf{H}(\mathbf{x})\|_\infty$.
+
 - Solve 
+
 $$
 \mathbf{H}_{\text{aug}}\,\mathbf{d} \;=\; -\nabla f(\mathbf{x}).
 $$
+
 - Use **backtracking** to find $\alpha \in [0,1]$ such that
+
 $$
 f(\mathbf{x} + \alpha\,\mathbf{d}) \;\le\; f(\mathbf{x}) \;+\; c\,\alpha\, \nabla f(\mathbf{x})^T \mathbf{d}.
 $$
+
 - If the line search **fails** to find improvement, we **reject** the step, **increase** $\lambda$, and re-try. If it **succeeds**, we **accept** the step, possibly **decrease** $\lambda$, and move on.
 
 ----
@@ -232,10 +241,10 @@ $$
 ### Key Components
 
 1. **Symbolic Derivatives**  
-   - We optionally use [SymPy](https://www.sympy.org/) to auto-generate the gradient $ \nabla f(\mathbf{x}) $ and Hessian $ \mathbf{H}(\mathbf{x}) $.  
+   - We optionally use [SymPy](https://www.sympy.org/) to auto-generate the gradient $\nabla f(\mathbf{x})$ and Hessian $\mathbf{H}(\mathbf{x})$.  
 
 2. **$\mathbf{LDL}^T$ Decomposition**  
-   - We factor $ \mathbf{H}_{\text{aug}} = \mathbf{H} + a \mathbf{I} $ via an [$\mathbf{LDL}^T$ decomposition]([ldl_decomposition.py](Procedures/ldl_decomposition.py)), ensuring numerical stability if $ \mathbf{H}_{\text{aug}} $ is positive definite.
+   - We factor $ \mathbf{H}_{\text{aug}} = \mathbf{H} + a \mathbf{I} $ via an [LDLᵀ decomposition](Procedures/ldl_decomposition.py), ensuring numerical stability if $ \mathbf{H}_{\text{aug}} $ is positive definite.
 
 3. **Backtracking Line Search**  
    - Implements **Armijo** sufficient-decrease condition:
@@ -249,7 +258,7 @@ $$
    - If no improvement occurs, $ \lambda $ is **doubled** and we re-factor $ \mathbf{H} + \lambda \mathbf{I} $.
 
 5. **Convergence Checks**  
-   - Stop if the gradient norm $ \|\nabla f(\mathbf{x})\| $ is small enough, the step size $ \|\mathbf{d}\| $ is small enough, or the function value changes below a tolerance.
+   - Stop if the gradient norm $\|\nabla f(\mathbf{x})\|$ is small enough, the step size $\|\mathbf{d}\|$ is small enough, or the function value changes below a tolerance.
 
 ----
 
@@ -261,22 +270,22 @@ $$
    - Tolerances: $ \epsilon, \delta, \eta $  
    - `maxiter`: max iterations  
 
-2. **Iteration** for $ k $ in $ 1,2,\dots $ up to `maxiter`:
-   1. Evaluate $ \nabla f(\mathbf{x}_k) $ and $ \mathbf{H}(\mathbf{x}_k) $.  
+2. **Iteration** for $k$ in $1,2,\dots$ up to `maxiter`:
+   1. Evaluate $\nabla f(\mathbf{x}_k)$ and $\mathbf{H}(\mathbf{x}_k)$.  
    2. Form 
    $$
    \mathbf{H}_{\text{aug}} \;=\; \mathbf{H}(\mathbf{x}_k) \;+\; \lambda \,\|\mathbf{H}(\mathbf{x}_k)\|_\infty \,\mathbf{I}.
    $$
-   3. Factor $ \mathbf{H}_{\text{aug}} $ (via LDLᵀ).  
+   3. Factor $\mathbf{H}_{\text{aug}}$ (via LDLᵀ).  
    4. Solve 
    $$
    \mathbf{H}_{\text{aug}}\,\mathbf{d} \;=\; -\,\nabla f(\mathbf{x}_k).
    $$
-   5. **Backtracking search**: Find $ \alpha \le 1 $ s.t. Armijo holds.  
-   6. If no such $ \alpha $ is found, **increase** $ \lambda $ and retry from step 2.  
-   7. Otherwise, compute $ f(\mathbf{x}_k + \alpha\,\mathbf{d}) $. If it’s an improvement:
-      - Accept the step: $ \mathbf{x}_{k+1} \leftarrow \mathbf{x}_k + \alpha\,\mathbf{d} $.  
-      - Possibly **decrease** $ \lambda $.  
+   5. **Backtracking search**: Find $\alpha \le 1$ s.t. Armijo holds.  
+   6. If no such $\alpha$ is found, **increase** $\lambda$ and retry from step 2.  
+   7. Otherwise, compute $f(\mathbf{x}_k + \alpha\,\mathbf{d})$. If it’s an improvement:
+      - Accept the step: $\mathbf{x}_{k+1} \leftarrow \mathbf{x}_k + \alpha\,\mathbf{d}$.  
+      - Possibly **decrease** $\lambda$.  
    8. Check convergence (gradient norm, step size, function change).  
 
 3. **Return** $(\mathbf{x}, f(\mathbf{x}), \text{iterations}, \text{nfev})$.
@@ -285,21 +294,21 @@ $$
 
 ### When to Use
 
-- **Ill-Conditioned Problems**: Damping stabilizes the Newton step if $ \mathbf{H} $ is indefinite or near-singular.  
+- **Ill-Conditioned Problems**: Damping stabilizes the Newton step if $\mathbf{H}$ is indefinite or near-singular.  
 - **Desire for a Smaller Step**: The line search can reduce step lengths that would otherwise be too large or skip over minima.  
-- **General Smooth Objectives**: Works for any scalar function $ f $; not restricted to least squares.
+- **General Smooth Objectives**: Works for any scalar function $f$; not restricted to least squares.
 
 ### Advantages
 
-- **Combines Damping + Line Search**: Avoids large or unproductive steps by regulating both direction (via $ \lambda $) and step length (via Armijo).  
-- **Adaptive**: Increases $ \lambda $ if no improvement is found, decreases $ \lambda $ if we succeed.  
+- **Combines Damping + Line Search**: Avoids large or unproductive steps by regulating both direction (via $\lambda$) and step length (via Armijo).  
+- **Adaptive**: Increases $\lambda$ if no improvement is found, decreases $\lambda$ if we succeed.  
 - **Symbolic Differentiation**: Minimizes risk of coding gradient/Hessian incorrectly.
 
 ### Caveats
 
-- **Repeated Factorizations**: If the step fails, we re-factor $ \mathbf{H} + \lambda \mathbf{I} $ with a larger $ \lambda $.  
-- **Extra Function Evaluations**: The line search calls $ f $ repeatedly, which can be expensive if $ f $ is complex.  
-- **Tuning**: The constants (0.5 for backtracking, 0.8 for reducing $ \lambda $, etc.) can be adjusted for performance.
+- **Repeated Factorizations**: If the step fails, we re-factor $\mathbf{H} + \lambda \mathbf{I}$ with a larger $\lambda$.  
+- **Extra Function Evaluations**: The line search calls $f$ repeatedly, which can be expensive if $ f $ is complex.  
+- **Tuning**: The constants (0.5 for backtracking, 0.8 for reducing $\lambda$, etc.) can be adjusted for performance.
 
 ----
 
@@ -335,7 +344,7 @@ print("Function evaluations:", result["nfev"])
 
 ## 3. [Newton–Raphson Method](Classes/NewtonRaphson.py)
 
-This Python implementation uses **Newton’s method** with an $ \mathbf{LDL}^T $ factorization to solve  
+This Python implementation uses **Newton’s method** with an $\mathbf{LDL}^T$ factorization to solve  
 $$
 \mathbf{H}(\mathbf{x}) \,\mathbf{d} = -\,\nabla f(\mathbf{x}),
 $$  
@@ -344,14 +353,14 @@ and **augments** the Hessian if $ \mathbf{H} $ is not positive definite.
 **Newton–Raphson method** iteratively refines a guess $ \mathbf{x} $ by using the local second-order (Hessian) approximation of the function $ f $.
 
 In each iteration:
-1. We compute $ \nabla f(\mathbf{x}) $ and $ \mathbf{H}(\mathbf{x}) $.  
-2. Factor $ \mathbf{H}(\mathbf{x}) $ via $ \mathbf{LDL}^T $.  
-3. If $ \mathbf{D} $ (the diagonal in $ \mathbf{LDL}^T $) has any non-positive entries, we add $ a\mathbf{I} $ to $ \mathbf{H} $ (with $ a $ scaled by $ \| \mathbf{H} \|_\infty $) and refactor.  
-4. Solve for $ \mathbf{d} $ in
+1. We compute $\nabla f(\mathbf{x})$ and $\mathbf{H}(\mathbf{x})$.  
+2. Factor $\mathbf{H}(\mathbf{x})$ via $\mathbf{LDL}^T$.  
+3. If $\mathbf{D}$ (the diagonal in $\mathbf{LDL}^T$) has any non-positive entries, we add $a\mathbf{I}$ to $\mathbf{H}$ (with $a$ scaled by $\| \mathbf{H} \|_\infty$) and refactor.  
+4. Solve for $\mathbf{d}$ in
    $$
    (\mathbf{H}(\mathbf{x}) + a\,\mathbf{I})\,\mathbf{d} = -\,\nabla f(\mathbf{x}).
    $$
-5. Update $ \mathbf{x} \leftarrow \mathbf{x} + \mathbf{d} $.  
+5. Update $\mathbf{x} \leftarrow \mathbf{x} + \mathbf{d}$.  
 6. Check convergence criteria (gradient norm, step size, function difference).
 
 ----
@@ -359,38 +368,38 @@ In each iteration:
 ### Key Components
 
 1. **Symbolic Derivatives (Optional)**  
-   - We can use [SymPy](https://www.sympy.org/) to generate $ \nabla f(\mathbf{x}) $ and $ \mathbf{H}(\mathbf{x}) $ automatically.
+   - We can use [SymPy](https://www.sympy.org/) to generate $\nabla f(\mathbf{x})$ and $\mathbf{H}(\mathbf{x})$ automatically.
 
 2. **$\mathbf{LDL}^T$ Factorization**  
-   - We use [$\mathbf{LDL}^T$ decomposition]([ldl_decomposition.py](Procedures/ldl_decomposition.py)) to solve linear systems with $ \mathbf{H}(\mathbf{x}) $.  
-   - If $ \mathbf{H} $ is not positive definite, we shift it by $ a\mathbf{I} $, ensuring the factorization is stable.
+   - We use [LDLᵀ decomposition](Procedures/ldl_decomposition.py) to solve linear systems with $\mathbf{H}(\mathbf{x})$.  
+   - If $\mathbf{H}$ is not positive definite, we shift it by $a\mathbf{I}$, ensuring the factorization is stable.
 
-3. **Augmented Hessian for Non-Positive $ \mathbf{D} $**  
-   - When any diagonal element of $ \mathbf{D} $ is $ \le 0 $, we add 
+3. **Augmented Hessian for Non-Positive $\mathbf{D}$**  
+   - When any diagonal element of $\mathbf{D}$ is $\le 0$, we add 
    $$
    a = 1.1 \,\|\mathbf{H}\|_\infty
    $$  
-   to $ \mathbf{H} $ and refactor.
+   to $\mathbf{H}$ and refactor.
 
 4. **Convergence Checks**  
    - Stop if  
-     - $ \|\nabla f(\mathbf{x})\| \lt \eta $  
-     - $ \|\mathbf{x}_{k+1} - \mathbf{x}_k\| \lt \epsilon $  
-     - $ |f(\mathbf{x}_{k+1}) - f(\mathbf{x}_k)| \lt \delta $  
+     - $\|\nabla f(\mathbf{x})\| \lt \eta$  
+     - $\|\mathbf{x}_{k+1} - \mathbf{x}_k\| \lt \varepsilon$  
+     - $|f(\mathbf{x}_{k+1}) - f(\mathbf{x}_k)| \lt \delta$  
 
 ----
 
 ### Algorithmic Sketch
 
 1. **Initialize**  
-   - $ \mathbf{x}_0 $ as initial guess  
-   - Tolerances: $ \epsilon, \delta, \eta $  
+   - $\mathbf{x}_0$ as initial guess  
+   - Tolerances: $\epsilon, \delta, \eta$  
    - Max iterations: `maxiter`
 
-2. **Iteration** ($ k = 0,1,\dots $):
-   1. Compute $ \nabla f(\mathbf{x}_k) $, $ \mathbf{H}(\mathbf{x}_k) $.  
-   2. Factor $ \mathbf{H}(\mathbf{x}_k) = \mathbf{L}\,\mathbf{D}\,\mathbf{L}^T $.  
-   3. If $ \mathbf{D} $ has non-positive entries, set 
+2. **Iteration** ($k = 0,1,\dots$):
+   1. Compute $\nabla f(\mathbf{x}_k)$, $\mathbf{H}(\mathbf{x}_k)$.  
+   2. Factor $\mathbf{H}(\mathbf{x}_k) = \mathbf{L}\,\mathbf{D}\,\mathbf{L}^T$.  
+   3. If $\mathbf{D}$ has non-positive entries, set 
    $$
    \mathbf{H} \leftarrow \mathbf{H} + a\,\mathbf{I}, \quad a = 1.1\,\|\mathbf{H}\|_\infty,
    $$
@@ -399,31 +408,31 @@ In each iteration:
    $$
    \mathbf{H}(\mathbf{x}_k)\,\mathbf{d} = -\,\nabla f(\mathbf{x}_k).
    $$
-   5. Update $ \mathbf{x}_{k+1} = \mathbf{x}_k + \mathbf{d} $.  
-   6. Check if $ \|\nabla f(\mathbf{x}_{k+1})\| \lt \eta $ etc.  
+   5. Update $\mathbf{x}_{k+1} = \mathbf{x}_k + \mathbf{d}$.  
+   6. Check if $\|\nabla f(\mathbf{x}_{k+1})\| \lt \eta$ etc.  
    7. If converged, stop; else continue.
 
-3. **Return** $ (\mathbf{x}, f(\mathbf{x}), \text{iterations}, \text{nfev}) $.
+3. **Return** $(\mathbf{x}, f(\mathbf{x}), \text{iterations}, \text{nfev})$.
 
 ----
 
 ### When to Use
 
-- **Well-Behaved or Mildly Indefinite Hessians**: A “plain” Newton step is typically fast if $ \mathbf{H} $ is fairly well-conditioned or only slightly indefinite.  
-- **General Smooth Objectives**: Works for generic scalar functions $ f(\mathbf{x}) $.  
+- **Well-Behaved or Mildly Indefinite Hessians**: A “plain” Newton step is typically fast if $\mathbf{H}$ is fairly well-conditioned or only slightly indefinite.  
+- **General Smooth Objectives**: Works for generic scalar functions $f(\mathbf{x})$.  
 - **Symbolic or Numerical Derivatives**: Flexible whether you compute derivatives symbolically or approximate them numerically.
 
 ### Advantages
 
 - **Fast Quadratic Convergence**: Newton’s method is often very efficient near the optimum.  
 - **Simple**: Minimal overhead compared to trust-region or line-search methods.  
-- **Automatic Hessian Fix**: If the Hessian is indefinite, adding $ a\mathbf{I} $ easily stabilizes the step.
+- **Automatic Hessian Fix**: If the Hessian is indefinite, adding $a\mathbf{I}$ easily stabilizes the step.
 
 ### Caveats
 
-- **No Line Search**: If the Hessian or update is poor, steps can overshoot. (Though we do add $ a\mathbf{I} $ if needed to fix indefiniteness.)  
+- **No Line Search**: If the Hessian or update is poor, steps can overshoot. (Though we do add $a\mathbf{I}$ if needed to fix indefiniteness.)  
 - **Potential Large Steps**: Without damping or step control, the algorithm can diverge on certain non-convex problems.  
-- **Expensive Factorization**: Each iteration requires factoring $ \mathbf{H} $.
+- **Expensive Factorization**: Each iteration requires factoring $\mathbf{H}$.
 
 ----
 
