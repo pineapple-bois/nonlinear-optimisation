@@ -12,7 +12,7 @@ $$
 f(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2
 $$
 
-<div style="display: flex; justify-content: space-around;">
+<div style="display: flex; justify-content: space-around; align-items: center;">
     <img src="FunctionImages/Surfaces/Himmelbrau.png" alt="surface" width="45%">
     <img src="FunctionImages/Contours/Himmelbrau.png" alt="contour" width="45%">
 </div>
@@ -93,7 +93,7 @@ $$
 f(x, y) = \sin(x + y) + (x - y)^2 - 1.5x + 2.5y + 1
 $$
 
-<div style="display: flex; justify-content: space-around;">
+<div style="display: flex; justify-content: space-around; align-items: center;">
     <img src="FunctionImages/Surfaces/McCormick.png" alt="surface" width="45%">
     <img src="FunctionImages/Contours/McCormick.png" alt="contour" width="45%">
 </div>
@@ -145,7 +145,7 @@ $$
 f(x, y) = \left(\frac{3}{2} - x + xy\right)^2 + \left(\frac{9}{4} - x + xy^2\right)^2 + \left(\frac{21}{8} - x + xy^3\right)^2
 $$
 
-<div style="display: flex; justify-content: space-around;">
+<div style="display: flex; justify-content: space-around; align-items: center;">
     <img src="FunctionImages/Surfaces/Beales.png" alt="surface" width="45%">
     <img src="FunctionImages/Contours/Beales.png" alt="contour" width="45%">
 </div>
@@ -197,7 +197,7 @@ for an $n$ dimensional domain.
 
 We set $n=2$
 
-<div style="display: flex; justify-content: space-around;">
+<div style="display: flex; justify-content: space-around; align-items: center;">
     <img src="FunctionImages/Surfaces/Rastrigin.png" alt="surface" width="45%">
     <img src="FunctionImages/Contours/Rastrigin.png" alt="contour" width="45%">
 </div>
