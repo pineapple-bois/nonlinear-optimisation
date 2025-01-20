@@ -2,7 +2,9 @@
 
 ----
 
-The objective of this project is to benchmark custom implementations of the Levenberg–Marquardt and Newton-Raphson minimisation methods and test on 'challenging functions' including;
+## [Benchmarking Against Challenging Functions](BenchmarkingOne.ipynb)
+
+The objective of this project is to test custom implementations of the Levenberg–Marquardt, and Newton-Raphson methods against [`scipy.optimize.minimize method='BFGS'`](https://docs.scipy.org/doc/scipy-1.15.0/reference/optimize.minimize-bfgs.html) and test performance on a few 'challenging functions' including;
 
 - **Himmelbrau's Function**
 $$
