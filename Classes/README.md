@@ -23,7 +23,7 @@ $$
 $$
 \text{predicted} 
     = \nabla f(x)^T \mathbf{d} 
-      -\tfrac12\,\mathbf{d}^T \mathbf{H}_{\text{model}} \mathbf{d}
+      -\tfrac12\mathbf{d}^T \mathbf{H}_{\text{model}} \mathbf{d}
 $$
 
 where $\mathbf{H}_{\text{model}}$ can be $\mathbf{H} + \lambda \mathbf{I}$ or just $\mathbf{H}$.
@@ -190,9 +190,9 @@ $$
 
 3. **Backtracking Line Search**  
    - Implements **Armijo** sufficient-decrease condition:
-$$
-f(\mathbf{x} + \alpha\mathbf{d}) \le f(\mathbf{x}) + c\alpha \nabla f(\mathbf{x})^T \mathbf{d}
-$$
+
+$$f(\mathbf{x} + \alpha\mathbf{d}) \le f(\mathbf{x}) + c\alpha \nabla f(\mathbf{x})^T \mathbf{d}$$
+
    - If no $\alpha$ satisfies this within a few attempts, the step is “rejected” and damping $\lambda$ is increased.
 
 4. **Adaptive Damping**  
@@ -216,12 +216,12 @@ $$
    1. Evaluate $\nabla f(\mathbf{x}_k)$ and $\mathbf{H}(\mathbf{x}_k)$.  
    2. Form
    
-   $$\mathbf{H}_{\text{aug}} = \mathbf{H}(\mathbf{x}_k) + \lambda \|\mathbf{H}(\mathbf{x}_k)\|_\infty \mathbf{I}$$
+$$\mathbf{H}_{\text{aug}} = \mathbf{H}(\mathbf{x}_k) + \lambda \|\mathbf{H}(\mathbf{x}_k)\|_\infty \mathbf{I}$$
 
    3. Factor $\mathbf{H}_{\text{aug}}$ (via $\mathbf{LDL}^T$).  
    4. Solve
    
-   $$\mathbf{H}_{\text{aug}}\mathbf{d} = -\nabla f(\mathbf{x}_k).$$
+$$\mathbf{H}_{\text{aug}}\mathbf{d} = -\nabla f(\mathbf{x}_k)$$
 
    5. **Backtracking search**: Find $\alpha \le 1$ s.t. Armijo holds.  
    6. If no such $\alpha$ is found, **increase** $\lambda$ and retry from step 2.  
@@ -301,10 +301,10 @@ In each iteration:
 2. Factor $\mathbf{H}(\mathbf{x})$ via $\mathbf{LDL}^T$.  
 3. If $\mathbf{D}$ (the diagonal in $\mathbf{LDL}^T$) has any non-positive entries, we add $a\mathbf{I}$ to $\mathbf{H}$ (with $a$ scaled by $\| \mathbf{H} \|_\infty$) and refactor.  
 4. Solve for $\mathbf{d}$ in
-$$
-(\mathbf{H}(\mathbf{x}) + a\mathbf{I})\mathbf{d} = -\nabla f(\mathbf{x}).
-$$
-5. Update $\mathbf{x} \leftarrow \mathbf{x} + \mathbf{d}$.  
+
+$$(\mathbf{H}(\mathbf{x}) + a\mathbf{I})\mathbf{d} = -\nabla f(\mathbf{x})$$
+
+5. Update $\mathbf{x} \leftarrow \mathbf{x} + \mathbf{d}$  
 6. Check convergence criteria (gradient norm, step size, function difference).
 
 ----
@@ -347,9 +347,9 @@ $$
    $$\mathbf{H} \leftarrow \mathbf{H} + a\,\mathbf{I}, \quad a = 1.1\,\|\mathbf{H}\|_\infty$$
    then refactor.  
    4. Solve  
-   $$\mathbf{H}(\mathbf{x}_k)\,\mathbf{d} = -\,\nabla f(\mathbf{x}_k)$$
-   5. Update $\mathbf{x}_{k+1} = \mathbf{x}_k + \mathbf{d}$.  
-   6. Check if $\|\nabla f(\mathbf{x}_{k+1})\| \lt \eta$ etc.  
+   $$\mathbf{H}(\mathbf{x}_k)\mathbf{d} = -\nabla f(\mathbf{x}_k)$$
+   5. Update $\mathbf{x}_{k+1} = \mathbf{x}_k + \mathbf{d}$  
+   6. Check if $\|\nabla f(\mathbf{x}_{k+1})\| \lt \eta$ etc...  
    7. If converged, stop; else continue.
 
 3. **Return** $(\mathbf{x}, f(\mathbf{x}), \text{iterations}, \text{nfev})$.
