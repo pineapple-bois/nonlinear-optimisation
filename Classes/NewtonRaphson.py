@@ -1,12 +1,13 @@
 import numpy as np
 import sympy as sp
+import numpy.linalg as LA
 from Procedures.ldl_decomposition import ldl_decomposition, ldl_solve
 
 
 class NewtonRaphsonSolver:
     def __init__(self, f, variables, x0,
                  epsilon=0.5e-5, delta=0.5e-5, eta=0.5e-5,
-                 maxiter=100, use_symbolic=True):
+                 maxiter=100, use_symbolic=True, track_history=True):
         """
         Initialize the Newton-Raphson solver with LDL decomposition.
 
@@ -26,6 +27,8 @@ class NewtonRaphsonSolver:
             Tolerance for gradient norm (||∇f(x_k)||).
         maxiter : int, optional
             Maximum number of iterations.
+        track_history : bool, optional
+            Whether to store history of iterations for analysis.
         """
         self.f = f
         self.variables = variables
@@ -35,6 +38,8 @@ class NewtonRaphsonSolver:
         self.eta = eta
         self.maxiter = maxiter
         self.use_symbolic = use_symbolic
+        self.track_history = track_history
+        self.nfev = 0
         self.gradient = None
         self.hessian = None
         self.history = []  # To store intermediate results
@@ -55,10 +60,15 @@ class NewtonRaphsonSolver:
         self.grad_func = [sp.lambdify(self.variables, g, 'numpy') for g in self.gradient]
         self.hessian_func = sp.lambdify(self.variables, self.hessian, 'numpy')
 
+    def _evaluate_function(self, f_func, x):
+        """Evaluate the function and increment the counter."""
+        self.nfev += 1
+        return f_func(*x)
+
     def solve(self, verbose=False):
         """Run the Newton-Raphson method using LDL decomposition."""
         f_func = sp.lambdify(self.variables, self.f, 'numpy')
-        f_current = f_func(*self.x)
+        f_current = self._evaluate_function(f_func, self.x)
 
         for iteration in range(self.maxiter):
             # Compute gradient and Hessian
@@ -68,6 +78,11 @@ class NewtonRaphsonSolver:
             # Perform LDL decomposition
             try:
                 L, D, p = ldl_decomposition(H_eval)
+                # If not positive definite, update H to be H + a I
+                if np.any(np.diag(D) <= 0):
+                    a = 1.1 * LA.norm(H_eval, np.inf)
+                    H_eval += a * np.identity(H_eval.shape[0])
+                    L, D, p = ldl_decomposition(H_eval)
             except Exception as e:
                 return self._finalize(iteration, f_current, f"LDL decomposition failed: {e}")
 
@@ -79,10 +94,11 @@ class NewtonRaphsonSolver:
 
             # Update x
             x_new = self.x + d
-            f_new = f_func(*x_new)
+            f_new = self._evaluate_function(f_func, x_new)
 
             # Store history
-            self.history.append((self.x.copy(), f_current))
+            if self.track_history:
+                self._store_history(f_current, grad_eval, iteration)
 
             if verbose:
                 print(f"Iteration {iteration + 1}: x = {x_new}, f(x) = {f_new}")
@@ -101,6 +117,15 @@ class NewtonRaphsonSolver:
 
         return self._finalize(self.maxiter, f_current, "Maximum iterations reached")
 
+    def _store_history(self, f_current, grad_eval, iteration):
+        """Store the current state for debugging and analysis."""
+        self.history.append({
+            "iteration": iteration,
+            "x": self.x.copy(),
+            "f": f_current,
+            "grad": grad_eval.copy()
+        })
+
     def _finalize(self, iterations, f_min, reason):
         """
         Finalize and return the result.
@@ -109,20 +134,23 @@ class NewtonRaphsonSolver:
         -------
         result : dict
             A dictionary containing:
-            - 'x_min': np.ndarray, the estimated minimizer.
-            - 'iterations': int, the number of iterations taken.
+            - 'message': str, a message describing why the method terminated.
             - 'success': bool, whether the method converged successfully.
-            - 'f_min': float, the function value at the final point.
-            - 'reason': str, a message describing why the method terminated.
+            - 'x': np.ndarray, the estimated minimizer.
+            - 'fun': float, the function value at the final point.
+            - 'nit': int, number of iterations taken.
+            - 'nfev': int, number of function evaluations.
+            - 'history': list, intermediate results for analysis.
         """
         success_reasons = [
             "Converged within tolerances",
         ]
         return {
-            "x_min": self.x,
-            "iterations": iterations,
             "success": reason in success_reasons,
-            "f_min": f_min,
-            "reason": reason,
+            "message": reason,
+            "x": self.x,
+            "fun": f_min,
+            "nit": iterations,
+            "nfev": self.nfev,
             "history": self.history
         }
