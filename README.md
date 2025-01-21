@@ -32,22 +32,17 @@ Developed as an educational exercise, the project aims to deepen understanding o
 ### Preliminaries: Scalar Fields, Functions of Two Variables
 
 Let us consider the case where $f(\mathbf{x})$ is a scalar field with two variables:
-$$
-z = f(x, y), \quad \mathbf{x} = (x, y)
-$$
+
+$$z = f(x, y), \quad \mathbf{x} = (x, y)$$
 
 Here, the gradient is:
-$$
-\nabla f(\mathbf{x}) = \begin{pmatrix} f_x(\mathbf{x}) \\ f_y(\mathbf{x}) \end{pmatrix}
-$$
+
+$$\nabla f(\mathbf{x}) = \begin{pmatrix} f_x(\mathbf{x}) \\ f_y(\mathbf{x}) \end{pmatrix}$$
+
 and the Hessian matrix is given:
-$$
-\mathbf{H}(\mathbf{x}) =
-\begin{bmatrix}
-f_{xx}(\mathbf{x}) & f_{xy}(\mathbf{x}) \\
-f_{yx}(\mathbf{x}) & f_{yy}(\mathbf{x})
-\end{bmatrix}
-$$
+
+$$\mathbf{H}(\mathbf{x}) = \begin{bmatrix} f_{xx}(\mathbf{x}) & f_{xy}(\mathbf{x}) \\
+f_{yx}(\mathbf{x}) & f_{yy}(\mathbf{x})\end{bmatrix}$$
 
 Now consider the second-order Taylor polynomial approximation $p_2(x, y)$ to $f(x, y)$ about a point $(a, b)$, namely:
 
