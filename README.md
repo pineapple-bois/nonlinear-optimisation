@@ -1,10 +1,122 @@
-# Nonlinear Optimisation - Finding local minimisers
+# Nonlinear Optimisation 
 
-## Newton-Raphson (NR) and Levenberg-Marquardt (LM) Implementations
+This project implements nonlinear optimisation methods, combining analytical and numerical techniques to solve unconstrained optimisation problems. It prioritises mathematical reasoning while ensuring computational efficiency and ease of use.
 
-Both NR and LM methods rely on a custom $\mathbf{LDL}^T$ decomposition designed to:
+The solvers:
+- Use symbolic computation where possible to maintain precision.
+- Transition to numerical computation for tasks like solving linear systems and matrix decompositions.
+- Provide outputs consistent with established libraries, such as SciPy, for benchmarking and integration.
+
+Developed as an educational exercise, the project aims to deepen understanding of the mathematical foundations of optimisation while creating robust, reusable tools.
+
+## Key Features
+
+1. **Hybrid Analytical-Numerical Approach**:
+   - Symbolic gradients and Hessians are used to reduce numerical inaccuracies.
+   - Numerical techniques ensure efficiency in solving linear systems and handling decompositions.
+
+2. **Custom Solver Classes**:
+   - Includes Levenberg-Marquardt and Newton-Raphson methods, among others.
+   - Provides results compatible with SciPy's optimisation routines for easy comparison.
+
+3. **Benchmarking with Test Functions**:
+   - Tested against well-known problems, such as Himmelblau's and Rastrigin's functions.
+   - Evaluates performance metrics like convergence rate, accuracy, and robustness.
+
+4. **Reproducibility**:
+   - Features clearly documented code and examples to facilitate exploration and further development.
+----
+
+## Project Goal: Finding a Local Minimiser of a Mathematical Function
+
+### Preliminaries: Scalar Fields, Functions of Two Variables
+
+Let us consider the case where $f(\mathbf{x})$ is a scalar field with two variables:
+$$
+z = f(x, y), \quad \mathbf{x} = (x, y)
+$$
+
+Here, the gradient is:
+$$
+\nabla f(\mathbf{x}) = \begin{pmatrix} f_x(\mathbf{x}) \\ f_y(\mathbf{x}) \end{pmatrix}
+$$
+and the Hessian matrix is given:
+$$
+\mathbf{H}(\mathbf{x}) =
+\begin{bmatrix}
+f_{xx}(\mathbf{x}) & f_{xy}(\mathbf{x}) \\
+f_{yx}(\mathbf{x}) & f_{yy}(\mathbf{x})
+\end{bmatrix}
+$$
+
+Now consider the second-order Taylor polynomial approximation $p_2(x, y)$ to $f(x, y)$ about a point $(a, b)$, namely:
+
+$$
+\begin{align}
+p_2(x, y) &= f(a, b) + f_x(a, b) (x - a) + f_y(a, b) (y - b) \\ 
+&\quad + \frac{1}{2} f_{xx}(a, b) (x - a)^2 + f_{xy}(a, b) (x - a)(y - b) \\
+&\quad+ \frac{1}{2} f_{yy}(a, b) (y - b)^2
+\end{align}\tag{1}
+$$
+
+We define:
+
+$$
+\mathbf{x} =
+\begin{pmatrix}
+x \\
+y
+\end{pmatrix}, \quad
+\mathbf{a} =
+\begin{pmatrix}
+a \\
+b
+\end{pmatrix}, \quad
+\mathbf{h} = \mathbf{x} - \mathbf{a} =
+\begin{pmatrix}
+x - a \\
+y - b
+\end{pmatrix}
+$$
+
+Equation $(1)$ can be expressed compactly as: 
+
+$$
+p_2(x, y) = f(\mathbf{a}) + \mathbf{h}^T\nabla f(\mathbf{a}) + \frac{1}{2}\mathbf{h}^T \mathbf{H}(\mathbf{a})\mathbf{h}\tag{2}
+$$
+
+If $\mathbf{a}$ is a local minimiser for $f$, then $\nabla f(\mathbf{a}) = \mathbf{0}$. Substituting this into equation $(2)$, we find:
+
+$$
+p_2(x, y) = f(\mathbf{a}) + \frac{1}{2}\mathbf{h}^T \mathbf{H}(\mathbf{a}) \mathbf{h}. \tag{3}
+$$
+
+Here, the behavior of $p_2(x, y)$ depends on the properties of the Hessian matrix $\mathbf{H}(\mathbf{a})$. Specifically:
+- If $\mathbf{H}(\mathbf{a})$ is **positive definite**, then $p_2(x, y)$ achieves a local minimum at $\mathbf{a}$.
+- If $\mathbf{H}(\mathbf{a})$ is **negative definite**, then $p_2(x, y)$ achieves a local maximum at $\mathbf{a}$.
+- If $\mathbf{H}(\mathbf{a})$ is indefinite, $\mathbf{a}$ is a **saddle point**.
+
+To analyze $\mathbf{H}(\mathbf{a})$ efficiently, we can use the $\mathbf{LDL}^T$ decomposition which expresses the Hessian as $\mathbf{H} = \mathbf{L} \mathbf{D} \mathbf{L}^T$
+
+where:
+- $\mathbf{L}$ is a lower triangular matrix with ones on the diagonal.
+- $\mathbf{D}$ is a diagonal matrix containing the eigenvalues (or modified pivot values) of $\mathbf{H}$.
+
+The signs of the entries of $\mathbf{D}$ determine whether $\mathbf{H}$ is positive definite, negative definite, or indefinite. By applying this decomposition, we can efficiently verify the nature of the critical point $\mathbf{a}$.
+
+The $\mathbf{LDL}^T$ decomposition also provides an efficient way to solve systems of equations of the form:
+
+$$
+\mathbf{A} \mathbf{x} = \mathbf{b}
+$$
+
+---
+
+## Newton-Raphson (NR) and Levenberg-Marquardt (LM) Methods
+
+Both NR and LM methods rely on a custom $\mathbf{LDL}^T$ [decomposition](Procedures/ldl_decomposition.py) designed to:
 - Match the efficiency of [`scipy.linalg.ldl`](https://docs.scipy.org/doc/scipy-1.15.0/reference/generated/scipy.linalg.ldl.html) while applying partial pivoting only when necessary.
-- Solve triangular systems using forward and backward substitution.
+- Solve [triangular systems](Procedures/LU_functions.py) using forward and backward substitution.
 
 ### Key Features of $\mathbf{LDL}^T$ Implementation:
 - **Partial Pivoting**: Applied conditionally to ensure numerical stability for small or negative pivots.
@@ -12,44 +124,6 @@ Both NR and LM methods rely on a custom $\mathbf{LDL}^T$ decomposition designed 
 - **Learning-Oriented**: Built to explore the fundamentals of numerical linear algebra.
 
 This $\mathbf{LDL}^T$ decomposition underpins the optimisation methods, ensuring stable and efficient solutions to the linear systems in each iteration.
-
-----
-
-## [Levenberg-Marquardt (LM) Solver](Classes/LevenbergMarquardtTrustRegion.py)
-
-The custom Levenberg-Marquardt implementation adopts a **trust-region approach**, blending the steepest descent and Newton directions by augmenting the Hessian matrix with a damping parameter $\lambda$. The method dynamically adjusts $\lambda$ based on the actual versus predicted reduction in the objective function.
-
-### Key Features:
-1. **Augmented Hessian**: 
-   - The Hessian is modified as $\mathbf{H}_{\text{aug}} = \mathbf{H} + \lambda \mathbf{I}$ to stabilise the Newton step and control step size.
-   - The damping parameter $\lambda$ is adjusted iteratively to balance between the Gauss-Newton and gradient descent directions.
-
-2. **Trust Region Management**:
-   - $\lambda$ is increased if the step is rejected ($\rho < 0.25$) and decreased if the step performs well ($\rho > 0.75$).
-   - $\rho$: Ratio of actual reduction to predicted reduction.
-
-3. **Efficient Linear Solves**:
-   - Utilises the custom $\mathbf{LDL}^T$ decomposition to solve the linear system $\mathbf{H}_{\text{aug}} \mathbf{d} = -\nabla f$.
-
-4. **Convergence Criteria**:
-   - The solver terminates when:
-     - Gradient norm: $||\nabla f|| < \eta$,
-     - Step size: $||\Delta x|| < \varepsilon$,
-     - Function value change: $|f(x_{k+1}) - f(x_k)| < \delta$.
-
-5. **Symbolic Derivatives**:
-   - Symbolic gradient and Hessian calculations (via SymPy) ensure precision for small-scale problems.
-
-### Algorithm Outline:
-1. Initialise $\lambda$ and evaluate the gradient ($\nabla f$) and Hessian ($\mathbf{H}$).
-2. Augment the Hessian ($\mathbf{H}_{\text{aug}}$) and solve for the step $d$ using $\mathbf{LDL}^T$.
-3. Compute the actual and predicted reductions, update $\lambda$, and decide to accept or reject the step.
-4. Repeat until convergence or the maximum number of iterations is reached.
-
-### Advantages:
-- Robust for poorly conditioned problems due to adaptive damping.
-- Handles flat regions effectively, avoiding divergence.
-- Tracks intermediate results for analysis, including $\lambda$, $\nabla f$, and $f(x)$.
 
 ----
 
@@ -94,9 +168,48 @@ This implementation prioritises numerical stability and precision while retainin
 
 ----
 
+
+## [Levenberg-Marquardt (LM) Solver](Classes/LevenbergMarquardtTrustRegion.py)
+
+The custom Levenberg-Marquardt implementation adopts a **trust-region approach**, blending the steepest descent and Newton directions by augmenting the Hessian matrix with a damping parameter $\lambda$. The method dynamically adjusts $\lambda$ based on the actual versus predicted reduction in the objective function.
+
+### Key Features:
+1. **Augmented Hessian**: 
+   - The Hessian is modified as $\mathbf{H}_{\text{aug}} = \mathbf{H} + \lambda \mathbf{I}$ to stabilise the Newton step and control step size.
+   - The damping parameter $\lambda$ is adjusted iteratively to balance between the Gauss-Newton and gradient descent directions.
+
+2. **Trust Region Management**:
+   - $\lambda$ is increased if the step is rejected ($\rho < 0.25$) and decreased if the step performs well ($\rho > 0.75$).
+   - $\rho$: Ratio of actual reduction to predicted reduction.
+
+3. **Efficient Linear Solves**:
+   - Utilises the custom $\mathbf{LDL}^T$ decomposition to solve the linear system $\mathbf{H}_{\text{aug}} \mathbf{d} = -\nabla f$.
+
+4. **Convergence Criteria**:
+   - The solver terminates when:
+     - Gradient norm: $||\nabla f|| < \eta$,
+     - Step size: $||\Delta x|| < \varepsilon$,
+     - Function value change: $|f(x_{k+1}) - f(x_k)| < \delta$.
+
+5. **Symbolic Derivatives**:
+   - Symbolic gradient and Hessian calculations (via SymPy) ensure precision for small-scale problems.
+
+### Algorithm Outline:
+1. Initialise $\lambda$ and evaluate the gradient ($\nabla f$) and Hessian ($\mathbf{H}$).
+2. Augment the Hessian ($\mathbf{H}_{\text{aug}}$) and solve for the step $d$ using $\mathbf{LDL}^T$.
+3. Compute the actual and predicted reductions, update $\lambda$, and decide to accept or reject the step.
+4. Repeat until convergence or the maximum number of iterations is reached.
+
+### Advantages:
+- Robust for poorly conditioned problems due to adaptive damping.
+- Handles flat regions effectively, avoiding divergence.
+- Tracks intermediate results for analysis, including $\lambda$, $\nabla f$, and $f(x)$.
+
+----
+
 ## Notebook: [Testing with Challenging Functions](BenchmarkingOne.ipynb)
 
-The objective of this project is to test the custom implementations of the LM, and NR methods against [`scipy.optimize.minimize method='BFGS'`](https://docs.scipy.org/doc/scipy-1.15.0/reference/optimize.minimize-bfgs.html) by testing performance on a few "challenging functions".
+We now test the custom implementations of LM, and NR methods side-by-side with [`scipy.optimize.minimize method='BFGS'`](https://docs.scipy.org/doc/scipy-1.15.0/reference/optimize.minimize-bfgs.html) by testing performance on a few "challenging functions".
 
 **Benchmarking Plan**
 
@@ -334,3 +447,14 @@ Testing from $\mathbf{x}_0 = [0.5, 0.5]$:
 
 ----
 
+### Future Directions
+
+**Constrained Optimisation**:
+   - Extend the current solvers to handle problems with equality and inequality constraints, incorporating techniques like Lagrange multipliers or barrier methods.
+
+**Large-Scale Problems**:
+   - Adapt the solvers to efficiently handle high-dimensional problems, leveraging sparse matrix techniques and iterative methods for linear systems.
+
+---
+
+[![Licence: MIT](https://img.shields.io/badge/Licence-MIT-yellow.svg)](LICENSE.md) [![Pineapple Bois](https://img.shields.io/badge/Website-Pineapple_Bois-5087B2.svg?style=flat&logo=telegram)](https://pineapple-bois.github.io)
