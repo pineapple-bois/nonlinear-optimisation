@@ -25,11 +25,12 @@ Developed as an educational exercise, the project aims to deepen understanding o
 
 4. **Reproducibility**:
    - Features clearly documented code and examples to facilitate exploration and further development.
-----
+
 
 ## Project Goal: Finding a Local Minimiser of a Mathematical Function
 
-### Preliminaries: Scalar Fields, Functions of Two Variables
+### Mathematical Preliminaries: 
+**Scalar Fields, Functions of Two Variables**
 
 Let us consider the case where $f(\mathbf{x})$ is a scalar field with two variables:
 
@@ -105,8 +106,6 @@ $$
 \mathbf{A} \mathbf{x} = \mathbf{b}
 $$
 
----
-
 ## Newton-Raphson (NR) and Levenberg-Marquardt (LM) Methods
 
 Both NR and LM methods rely on a custom $\mathbf{LDL}^T$ [decomposition](Procedures/ldl_decomposition.py) designed to:
@@ -120,7 +119,6 @@ Both NR and LM methods rely on a custom $\mathbf{LDL}^T$ [decomposition](Procedu
 
 This $\mathbf{LDL}^T$ decomposition underpins the optimisation methods, ensuring stable and efficient solutions to the linear systems in each iteration.
 
-----
 
 ## [Newton-Raphson (NR) Solver](Classes/NewtonRaphson.py)
 
@@ -161,7 +159,6 @@ The custom Newton-Raphson implementation leverages the full second-order informa
 
 This implementation prioritises numerical stability and precision while retaining the efficiency of second-order optimisation techniques.
 
-----
 
 
 ## [Levenberg-Marquardt (LM) Solver](Classes/LevenbergMarquardtTrustRegion.py)
@@ -200,7 +197,7 @@ The custom Levenberg-Marquardt implementation adopts a **trust-region approach**
 - Handles flat regions effectively, avoiding divergence.
 - Tracks intermediate results for analysis, including $\lambda$, $\nabla f$, and $f(x)$.
 
-----
+
 
 ## Notebook: [Testing with Challenging Functions](BenchmarkingOne.ipynb)
 
@@ -257,8 +254,6 @@ Starting from $\mathbf{x}_0=(0,0)$, (Chosen not to be minimiser by inspection of
   - Flat regions in the function surface can also delay convergence, particularly for gradient-based methods.
 
 
------
-
 ## 2. Powell's Singular Function
 
 $$
@@ -294,8 +289,6 @@ Starting from $\mathbf{x}_0=(3, -1, 0, 1)$, (Standard test starting point)
 
 #### Challenges:
 - The function is convex but has **flat regions** in the search space, causing slow convergence.
-
-----
 
 ## 3. McCormick's Function
 
@@ -347,8 +340,6 @@ Testing from three different starting points:
 - Newton-Raphson was the fastest for the easy case but failed completely in the medium and hard case.
 - Levenberg-Marquardt showed robust and reliable performance for the easy and medium cases.
 
-----
-
 ## 4. Beale's Function
 
 $$
@@ -394,8 +385,6 @@ Testing from three different starting points:
 - Newton-Raphson performs well near well-behaved regions but fails in complex scenarios.
 - Levenberg-Marquardt demonstrates robustness for moderately difficult starting points but struggles in extreme cases.
 - BFGS is consistent in finding minimisers but can be computationally expensive in challenging regions.
-
-----
 
 ## 5. Rastrigin Function
 
@@ -450,6 +439,5 @@ Testing from $\mathbf{x}_0 = [0.5, 0.5]$:
 **Large-Scale Problems**:
    - Adapt the solvers to efficiently handle high-dimensional problems, leveraging sparse matrix techniques and iterative methods for linear systems.
 
----
 
 [![Licence: MIT](https://img.shields.io/badge/Licence-MIT-yellow.svg)](LICENSE.md) [![Pineapple Bois](https://img.shields.io/badge/Website-Pineapple_Bois-5087B2.svg?style=flat&logo=telegram)](https://pineapple-bois.github.io)
